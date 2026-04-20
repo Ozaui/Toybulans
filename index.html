@@ -463,6 +463,144 @@
     padding: 5px 10px; border-radius: 6px; white-space: nowrap;
     pointer-events: none; z-index: 100;
   }
+
+  /* ══════════════════════════════════════
+     MOBİL UYUMLULUK – max-width: 768px
+  ══════════════════════════════════════ */
+  @media (max-width: 768px) {
+    /* Slide base */
+    .slide {
+      padding: 18px 14px 90px;
+      justify-content: flex-start;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Nav */
+    #nav {
+      bottom: 10px;
+      padding: 8px 14px;
+      gap: 10px;
+    }
+    #nav button {
+      width: 34px; height: 34px;
+      font-size: 15px;
+    }
+    .dot { width: 8px; height: 8px; }
+    #dots { gap: 6px; }
+    #slideNum { font-size: 11px; min-width: 32px; }
+
+    /* Typography */
+    h2 { text-align: center; }
+    p.lead { font-size: .85rem; padding: 0 4px; }
+
+    /* Cover – Slide 1 */
+    .brand-badge {
+      font-size: clamp(1.6rem, 10vw, 3rem);
+      letter-spacing: 3px;
+      padding: 10px 20px;
+    }
+    .subtitle-cover { font-size: .82rem; }
+    .cover-badges { gap: 8px; }
+    .cbadge { font-size: .72rem; padding: 5px 10px; }
+    .scroll-hint { bottom: 78px; }
+
+    /* Concept grid – Slide 2 */
+    .concept-grid {
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    .concept-card { padding: 18px 14px; }
+    .concept-icon { font-size: 2rem; }
+
+    /* Trailer SVG – Slide 3 */
+    .trailer-scene { max-width: 100%; }
+    .label-list { gap: 8px; }
+    .llabel { font-size: .72rem; padding: 4px 10px; }
+
+    /* Flow – Slide 4 */
+    .flow-wrap { margin-top: 10px; }
+    .flow-diagram { height: 150px; }
+    .inside-labels { padding: 0 110px; }
+    .in-label { font-size: .62rem; }
+    .in-label span { font-size: 1.1rem; }
+    .ramp-label { font-size: .6rem; }
+    .flow-steps {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .fstep::after { display: none; }
+    .fstep { padding: 12px 8px; }
+    .fstep-icon { font-size: 1.4rem; }
+    .fstep h4 { font-size: .75rem; }
+    .fstep p  { font-size: .68rem; }
+
+    /* Floor plan SVG – Slide 5 */
+    .floorplan-wrap { margin-top: 10px; }
+
+    /* Features grid – Slide 6 */
+    .features-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .feat-card { padding: 14px 12px; }
+    .feat-icon { font-size: 1.6rem; }
+    .feat-card h4 { font-size: .82rem; }
+    .feat-card p  { font-size: .72rem; }
+
+    /* Rail diagram – Slide 7 */
+    .rail-system-wrap { margin-top: 10px; }
+    .rail-diagram { height: 160px; padding: 20px; margin-bottom: 14px; }
+    .rail-specs {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .rspec { padding: 12px; }
+
+    /* Water grid – Slide 8 */
+    .water-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .water-panel { padding: 18px 14px; }
+    .tank-visual { width: 64px; height: 96px; }
+    .witem { font-size: .76rem; padding: 6px 10px; }
+
+    /* Closing – Slide 9 */
+    .closing-wrap { padding: 0 8px; }
+    .big-icon { font-size: 3.5rem; margin-bottom: 14px; }
+    .stats-row { gap: 10px; margin: 18px 0; }
+    .stat-box { padding: 14px 16px; }
+    .stat-box .num { font-size: 1.6rem; }
+    .stat-box .lbl { font-size: .68rem; }
+    .cta-btn { padding: 12px 28px; font-size: .9rem; }
+  }
+
+  /* ══════════════════════════════════════
+     MOBİL – max-width: 480px (küçük telefon)
+  ══════════════════════════════════════ */
+  @media (max-width: 480px) {
+    .slide { padding: 14px 10px 88px; }
+
+    .features-grid { grid-template-columns: 1fr; }
+    .flow-steps    { grid-template-columns: 1fr; }
+
+    /* Dots overflow'u önle – çok küçük ekranlarda sadece gizle */
+    #dots { gap: 5px; }
+    .dot  { width: 7px; height: 7px; }
+
+    .flow-diagram { height: 130px; }
+    .inside-labels { padding: 0 100px; }
+    .cow { width: 46px; height: 46px; font-size: 30px; line-height: 46px; }
+
+    .brand-badge { letter-spacing: 2px; padding: 8px 14px; }
+    .stats-row { flex-direction: column; align-items: center; }
+    .stat-box { width: 100%; max-width: 260px; }
+  }
 </style>
 </head>
 <body>
