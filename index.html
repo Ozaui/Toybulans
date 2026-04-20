@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOYBULANS – Mobil Hayvan Bakım Römorku</title>
+<style>
+  :root {
+    --primary: #1a6b3c;
+    --secondary: #2d9e5f;
+    --accent: #f0a500;
+    --dark: #0d1b12;
+    --light: #e8f5ed;
+    --steel: #8fa3b1;
+    --danger: #c0392b;
+    --blue: #1a5276;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--dark);
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ── Slide engine ── */
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity .6s ease, transform .6s ease;
+    transform: translateX(60px);
+    padding: 40px;
+    overflow: hidden;
+  }
+  .slide.active {
+    opacity: 1; pointer-events: all;
+    transform: translateX(0);
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ── Progress & Nav ── */
+  #nav {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 16px;
+    z-index: 999;
+    background: rgba(0,0,0,.45);
+    padding: 10px 22px; border-radius: 40px;
+    backdrop-filter: blur(8px);
+  }
+  #nav button {
+    background: var(--secondary); border: none; color: #fff;
+    width: 40px; height: 40px; border-radius: 50%;
+    font-size: 18px; cursor: pointer;
+    transition: background .2s;
+  }
+  #nav button:hover { background: var(--accent); }
+  #dots { display: flex; gap: 8px; }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,.3); cursor: pointer;
+    transition: background .3s, transform .3s;
+  }
+  .dot.active { background: var(--accent); transform: scale(1.4); }
+  #slideNum { font-size: 13px; opacity: .6; min-width: 40px; text-align: center; }
+
+  /* ── Shared typography ── */
+  .tag {
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+    display: inline-block;
+  }
+  h1 { font-size: clamp(2rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; }
+  h2 { font-size: clamp(1.4rem, 3vw, 2.4rem); font-weight: 700; }
+  p.lead { font-size: clamp(.9rem, 1.6vw, 1.15rem); opacity: .82; line-height: 1.7; max-width: 720px; text-align: center; }
+
+  /* ── BG meshes ── */
+  .mesh {
+    position: absolute; border-radius: 50%; filter: blur(80px);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ═══════════════════════════════
+     SLIDE 1 – COVER
+  ═══════════════════════════════ */
+  #s1 { background: radial-gradient(ellipse at 30% 40%, #0f3320 0%, #0d1b12 70%); }
+  #s1 .mesh1 { width:600px;height:600px; background:rgba(45,158,95,.15); top:-100px; right:-100px; }
+  #s1 .mesh2 { width:400px;height:400px; background:rgba(240,165,0,.08); bottom:-80px; left:-80px; }
+  #s1 .logo-wrap {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  .brand-badge {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: 2px solid rgba(240,165,0,.4);
+    border-radius: 16px; padding: 12px 32px;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    font-weight: 900; letter-spacing: 6px;
+    color: #fff;
+    box-shadow: 0 0 60px rgba(45,158,95,.4);
+    text-shadow: 0 2px 20px rgba(0,0,0,.5);
+  }
+  .subtitle-cover {
+    font-size: clamp(.85rem, 1.8vw, 1.2rem);
+    opacity: .7; text-align: center; max-width: 500px;
+    letter-spacing: 1px;
+  }
+  .cover-badges {
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+    margin-top: 10px;
+  }
+  .cbadge {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 20px; padding: 6px 16px;
+    font-size: .8rem; color: var(--accent);
+  }
+  .scroll-hint {
+    position: absolute; bottom: 90px; left: 50%;
+    transform: translateX(-50%);
+    font-size: .75rem; opacity: .4; letter-spacing: 2px;
+    animation: bounce 2s infinite;
+  }
+  @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+
+  /* ═══════════════════════════════
+     SLIDE 2 – KONSEPT
+  ═══════════════════════════════ */
+  #s2 { background: linear-gradient(135deg, #0d1b12 0%, #0a1520 100%); }
+  .concept-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px; width: 100%; max-width: 960px;
+    position: relative; z-index: 1; margin-top: 20px;
+  }
+  .concept-card {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px; padding: 24px;
+    transition: transform .3s, box-shadow .3s;
+  }
+  .concept-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(45,158,95,.2);
+  }
+  .concept-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .concept-card h3 { font-size: 1.1rem; color: var(--accent); margin-bottom: 6px; }
+  .concept-card p { font-size: .88rem; opacity: .75; line-height: 1.6; }
+
+  /* ═══════════════════════════════
+     SLIDE 3 – DIŞTAN GÖRÜNÜM (SVG)
+  ═══════════════════════════════ */
+  #s3 { background: linear-gradient(180deg, #0d1f2d 0%, #0d1b12 100%); }
+  .trailer-scene {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 900px;
+  }
+  .trailer-svg-wrap {
+    width: 100%; border-radius: 20px;
+    overflow: visible;
+  }
+  .label-list {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    justify-content: center; margin-top: 16px;
+  }
+  .llabel {
+    background: rgba(45,158,95,.2);
+    border: 1px solid rgba(45,158,95,.4);
+    border-radius: 20px; padding: 5px 14px;
+    font-size: .78rem; color: #a8e6c0;
+  }
+
+  /* ═══════════════════════════════
+     SLIDE 4 – AKIŞ ANİMASYONU
+  ═══════════════════════════════ */
+  #s4 { background: linear-gradient(135deg, #0a1520 0%, #0d1b12 100%); }
+  .flow-wrap {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 960px;
+    margin-top: 20px;
+  }
+  .flow-diagram {
+    position: relative;
+    height: 220px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .trailer-body-flow {
+    position: absolute;
+    left: 120px; right: 120px; top: 30px; bottom: 30px;
+    background: linear-gradient(90deg, #1a3d2b, #1e4d35);
+    border-radius: 8px;
+    border: 2px solid rgba(45,158,95,.5);
+  }
+  .ramp-front {
+    position: absolute; left: 20px; top: 60px;
+    width: 100px; height: 100px;
+    background: linear-gradient(135deg, #2d6a4f, #1a3d2b);
+    clip-path: polygon(0 100%, 100% 0, 100% 100%);
+    border-radius: 4px;
+  }
+  .ramp-rear {
+    position: absolute; right: 20px; top: 60px;
+    width: 100px; height: 100px;
+    background: linear-gradient(135deg, #2d6a4f, #1a3d2b);
+    clip-path: polygon(0 0, 100% 100%, 0 100%);
+    border-radius: 4px;
+  }
+  .ramp-label {
+    position: absolute; font-size: .7rem;
+    color: var(--accent); text-align: center;
+    letter-spacing: 1px;
+  }
+  .ramp-label.front { left: 10px; bottom: 16px; width: 110px; }
+  .ramp-label.rear  { right: 10px; bottom: 16px; width: 110px; }
+  .inside-labels {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 0 140px;
+  }
+  .in-label {
+    font-size: .7rem; opacity: .7; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .in-label span { font-size: 1.4rem; }
+
+  /* Cow animation */
+  .cow {
+    position: absolute; top: 70px;
+    width: 60px; height: 60px;
+    font-size: 40px; line-height: 60px; text-align: center;
+    animation: cowWalk 6s ease-in-out infinite;
+  }
+  @keyframes cowWalk {
+    0%   { right: 20px; opacity: 0; }
+    10%  { right: 50px; opacity: 1; }
+    40%  { right: 200px; }
+    60%  { right: 400px; }
+    80%  { right: 600px; opacity: 1; }
+    90%  { right: 700px; opacity: 0; }
+    100% { right: 20px; opacity: 0; }
+  }
+
+  .flow-steps {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .fstep {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 12px; padding: 16px 12px; text-align: center;
+    position: relative;
+  }
+  .fstep::after {
+    content: '→';
+    position: absolute; right: -14px; top: 50%; transform: translateY(-50%);
+    color: var(--accent); font-size: 1.2rem; z-index: 2;
+  }
+  .fstep:last-child::after { display: none; }
+  .fstep-icon { font-size: 1.8rem; margin-bottom: 6px; }
+  .fstep h4 { font-size: .8rem; color: var(--accent); margin-bottom: 4px; }
+  .fstep p  { font-size: .72rem; opacity: .65; line-height: 1.4; }
+
+  /* ═══════════════════════════════
+     SLIDE 5 – İÇ PLAN
+  ═══════════════════════════════ */
+  #s5 { background: linear-gradient(135deg, #0d1520 0%, #0d1b12 100%); }
+  .floorplan-wrap {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 960px;
+    margin-top: 16px;
+  }
+
+  /* ═══════════════════════════════
+     SLIDE 6 – ÖZELLİKLER
+  ═══════════════════════════════ */
+  #s6 { background: radial-gradient(ellipse at 70% 30%, #0f2d20 0%, #0d1b12 70%); }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 18px; width: 100%; max-width: 1000px;
+    position: relative; z-index: 1; margin-top: 20px;
+  }
+  .feat-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 14px; padding: 20px 16px;
+    transition: all .3s;
+    cursor: default;
+  }
+  .feat-card:hover {
+    background: rgba(45,158,95,.12);
+    border-color: rgba(45,158,95,.4);
+    transform: translateY(-3px);
+  }
+  .feat-icon { font-size: 2rem; margin-bottom: 8px; }
+  .feat-card h4 { font-size: .92rem; color: var(--accent); margin-bottom: 5px; }
+  .feat-card p  { font-size: .78rem; opacity: .68; line-height: 1.55; }
+
+  /* ═══════════════════════════════
+     SLIDE 7 – RAY + PİSTON SİSTEMİ
+  ═══════════════════════════════ */
+  #s7 { background: linear-gradient(135deg, #0a0d1a 0%, #0d1b12 100%); }
+  .rail-system-wrap {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 900px; margin-top: 20px;
+  }
+  .rail-diagram {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px; padding: 30px;
+    margin-bottom: 20px;
+    position: relative; height: 200px; overflow: hidden;
+  }
+  /* Rail tracks */
+  .rail-track {
+    position: absolute; left: 40px; right: 40px;
+    height: 8px; background: linear-gradient(90deg, #555, #888, #555);
+    border-radius: 4px;
+  }
+  .rail-track.top { top: 40px; }
+  .rail-track.bottom { top: 80px; }
+  /* Piston */
+  .piston-body {
+    position: absolute; left: 50%; top: 30px;
+    transform: translateX(-50%);
+    width: 40px;
+  }
+  .piston-cylinder {
+    width: 40px; height: 80px;
+    background: linear-gradient(90deg, #4a6080, #8fa3b1, #4a6080);
+    border-radius: 6px;
+    animation: pistonMove 3s ease-in-out infinite;
+  }
+  .piston-rod {
+    width: 10px; height: 60px; margin: 0 auto;
+    background: linear-gradient(90deg, #333, #999, #333);
+    border-radius: 5px;
+    animation: pistonRod 3s ease-in-out infinite;
+  }
+  @keyframes pistonMove { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(20px)} }
+  @keyframes pistonRod  { 0%,100%{height:60px} 50%{height:40px} }
+
+  /* Trolley on rail */
+  .trolley {
+    position: absolute; top: 20px;
+    width: 50px; height: 30px;
+    background: linear-gradient(135deg, #2d6a4f, #1a3d2b);
+    border: 2px solid var(--secondary);
+    border-radius: 6px;
+    animation: trolleyMove 4s ease-in-out infinite;
+  }
+  .trolley::before, .trolley::after {
+    content: '●';
+    position: absolute; font-size: 8px; color: #555;
+    bottom: -6px;
+  }
+  .trolley::before { left: 4px; }
+  .trolley::after  { right: 4px; }
+  @keyframes trolleyMove { 0%{left:50px} 50%{left:calc(100% - 140px)} 100%{left:50px} }
+
+  .rail-specs {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  }
+  .rspec {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px; padding: 16px; text-align: center;
+  }
+  .rspec h4 { color: var(--accent); font-size: .85rem; margin-bottom: 6px; }
+  .rspec p  { font-size: .78rem; opacity: .68; line-height: 1.5; }
+
+  /* ═══════════════════════════════
+     SLIDE 8 – SU & EKİPMAN
+  ═══════════════════════════════ */
+  #s8 { background: linear-gradient(135deg, #0a1520 0%, #0d1b12 100%); }
+  .water-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 24px; width: 100%; max-width: 960px;
+    position: relative; z-index: 1; margin-top: 20px;
+  }
+  .water-panel {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 16px; padding: 24px;
+  }
+  .water-panel h3 { color: var(--accent); font-size: 1rem; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px; }
+  .water-items { display: flex; flex-direction: column; gap: 8px; }
+  .witem {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.04);
+    border-radius: 8px; padding: 8px 12px;
+    font-size: .82rem;
+  }
+  .witem span { font-size: 1.2rem; }
+  /* Water fill anim */
+  .tank-visual {
+    width: 80px; height: 120px; border: 3px solid rgba(100,180,255,.4);
+    border-radius: 8px; position: relative; overflow: hidden;
+    margin: 0 auto 16px;
+  }
+  .water-fill {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, rgba(41,182,246,.6), rgba(2,132,199,.9));
+    animation: fillAnim 3s ease-in-out infinite alternate;
+  }
+  @keyframes fillAnim { 0%{height:30%} 100%{height:85%} }
+  .bubble {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,.4);
+    animation: rise 2s ease-in infinite;
+  }
+  .b1 { width:6px;height:6px; left:20%; animation-delay:0s; }
+  .b2 { width:4px;height:4px; left:50%; animation-delay:.7s; }
+  .b3 { width:5px;height:5px; left:70%; animation-delay:1.4s; }
+  @keyframes rise { 0%{bottom:5%;opacity:1} 100%{bottom:95%;opacity:0} }
+
+  /* ═══════════════════════════════
+     SLIDE 9 – KAPANIŞ
+  ═══════════════════════════════ */
+  #s9 { background: radial-gradient(ellipse at 50% 40%, #0f3320 0%, #0d1b12 70%); }
+  .closing-wrap { position: relative; z-index: 1; text-align: center; }
+  .big-icon { font-size: 5rem; margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  .stats-row {
+    display: flex; gap: 30px; justify-content: center;
+    margin: 30px 0; flex-wrap: wrap;
+  }
+  .stat-box {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px; padding: 20px 28px; text-align: center;
+  }
+  .stat-box .num { font-size: 2rem; font-weight: 800; color: var(--accent); }
+  .stat-box .lbl { font-size: .75rem; opacity: .6; margin-top: 4px; }
+  .cta-btn {
+    display: inline-block; margin-top: 20px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none; color: #fff; border-radius: 30px;
+    padding: 14px 40px; font-size: 1rem; font-weight: 700;
+    cursor: pointer; letter-spacing: 1px;
+    box-shadow: 0 8px 30px rgba(45,158,95,.4);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(45,158,95,.5); }
+
+  /* ── Tooltip ── */
+  [data-tip] { position: relative; cursor: help; }
+  [data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,.85); color: #fff; font-size: .72rem;
+    padding: 5px 10px; border-radius: 6px; white-space: nowrap;
+    pointer-events: none; z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+  SLIDE 1 – KAPAK
+══════════════════════════════════════ -->
+<section class="slide active" id="s1">
+  <div class="mesh mesh1"></div>
+  <div class="mesh mesh2"></div>
+  <div class="logo-wrap">
+    <span class="tag">Mobil Hayvan Sağlık Sistemi</span>
+    <div class="brand-badge">TOYBULANS</div>
+    <p class="subtitle-cover">
+      Hayvancılıkta devrim niteliğinde mobil bakım römorku —<br>
+      Hayvan artan kapıdan girer, tam bakımını alır, ön kapıdan çıkar.
+    </p>
+    <div class="cover-badges">
+      <span class="cbadge">🐄 Büyükbaş Uyumlu</span>
+      <span class="cbadge">💧 Basınçlı Su Sistemi</span>
+      <span class="cbadge">🛤️ Raylı Sistem</span>
+      <span class="cbadge">🔧 Tam Donanımlı</span>
+    </div>
+  </div>
+  <div class="scroll-hint">▼ &nbsp; İLERİ &nbsp; ▼</div>
+</section>
+
+<!-- ══════════════════════════════════════
+  SLIDE 2 – KONSEPT
+══════════════════════════════════════ -->
+<section class="slide" id="s2">
+  <span class="tag">Proje Konsepti</span>
+  <h2 style="text-align:center;margin-bottom:8px">Neden TOYBULANS?</h2>
+  <p class="lead" style="margin-bottom:4px">
+    Sahaya giden, tüm bakımı tek seferde yapan, tekrar yükleme gerektirmeyen mobil veteriner istasyonu.
+  </p>
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="concept-icon">🚜</div>
+      <h3>Arazi Uyumlu Römork</h3>
+      <p>Tanker veya traktör ile çekilebilir yapı. Düz ve engebeli arazide kararlı platform. Ön ve arka rampa sistemi ile hayvan akışı kesintisiz.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🔄</div>
+      <h3>Tek Yönlü Hayvan Akışı</h3>
+      <p>Hayvan <strong style="color:var(--accent)">arka rampadan</strong> girer; yıkama → sağlık kontrolü → tedavi → çıkış süreçlerini geçer; <strong style="color:var(--accent)">ön rampadan</strong> ayrılır.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">💡</div>
+      <h3>Sahaya Giden Klinik</h3>
+      <p>Çiftçinin hayvanı taşımasına gerek yok. Klinik çiftliğe gelir. Stres minimuma iner, verim artar.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">📦</div>
+      <h3>Her Şey Dahil Donanım</h3>
+      <p>Sağlık çekmeceleri, ekipman dolabı, basınçlı su tankı, pistonlu kaldıraç, ray sistemi, aydınlatma — hepsi tek platformda.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  SLIDE 3 – DIŞ GÖRÜNÜM (SVG)
+══════════════════════════════════════ -->
+<section class="slide" id="s3">
+  <span class="tag">Dış Görünüm</span>
+  <h2 style="margin-bottom:12px;text-align:center">Römork Yapısı</h2>
+  <div class="trailer-scene">
+    <svg viewBox="0 0 860 320" class="trailer-svg-wrap" xmlns="http://www.w3.org/2000/svg">
+      <!-- Ground shadow -->
+      <ellipse cx="430" cy="305" rx="340" ry="10" fill="rgba(0,0,0,.35)"/>
+
+      <!-- Coupling -->
+      <rect x="10" y="160" width="80" height="14" rx="7" fill="#555"/>
+      <circle cx="10" cy="167" r="10" fill="#444" stroke="#666" stroke-width="2"/>
+
+      <!-- Frame -->
+      <rect x="90" y="60" width="720" height="220" rx="10" fill="#1a3d2b" stroke="#2d9e5f" stroke-width="2"/>
+      <!-- Roof ridge -->
+      <rect x="90" y="60" width="720" height="22" rx="5" fill="#22503a"/>
+      <!-- Bottom rail -->
+      <rect x="90" y="258" width="720" height="22" rx="5" fill="#22503a"/>
+
+      <!-- Brand stripe -->
+      <rect x="90" y="140" width="720" height="4" fill="#f0a500" opacity=".7"/>
+      <rect x="90" y="150" width="720" height="2" fill="#f0a500" opacity=".4"/>
+
+      <!-- Brand name -->
+      <text x="430" y="205" text-anchor="middle" font-family="Segoe UI,sans-serif"
+            font-size="36" font-weight="900" letter-spacing="8"
+            fill="rgba(255,255,255,.9)">TOYBULANS</text>
+
+      <!-- Front ramp (left side) -->
+      <polygon points="90,258  90,280  20,310  20,285" fill="#2d6a4f" stroke="#2d9e5f" stroke-width="1.5"/>
+      <text x="52" y="304" text-anchor="middle" font-family="Segoe UI,sans-serif"
+            font-size="11" fill="#f0a500">ÖN ZAMPA</text>
+
+      <!-- Rear ramp (right side) -->
+      <polygon points="810,258  810,280  880,310  880,285" fill="#2d6a4f" stroke="#2d9e5f" stroke-width="1.5"/>
+      <text x="845" y="304" text-anchor="middle" font-family="Segoe UI,sans-serif"
+            font-size="11" fill="#f0a500">ARKA ZAMPA</text>
+
+      <!-- Corner posts left -->
+      <rect x="90" y="60" width="30" height="220" fill="#22503a" stroke="#2d9e5f" stroke-width="1"/>
+      <circle cx="105" cy="100" r="4" fill="#888"/>
+      <circle cx="105" cy="120" r="4" fill="#888"/>
+      <circle cx="105" cy="200" r="4" fill="#888"/>
+      <circle cx="105" cy="220" r="4" fill="#888"/>
+
+      <!-- Corner posts right -->
+      <rect x="780" y="60" width="30" height="220" fill="#22503a" stroke="#2d9e5f" stroke-width="1"/>
+      <circle cx="795" cy="100" r="4" fill="#888"/>
+      <circle cx="795" cy="120" r="4" fill="#888"/>
+      <circle cx="795" cy="200" r="4" fill="#888"/>
+      <circle cx="795" cy="220" r="4" fill="#888"/>
+
+      <!-- Left front wheel -->
+      <circle cx="230" cy="280" r="42" fill="#222" stroke="#555" stroke-width="4"/>
+      <circle cx="230" cy="280" r="28" fill="#333" stroke="#666" stroke-width="2"/>
+      <circle cx="230" cy="280" r="8"  fill="#888"/>
+      <line x1="230" y1="252" x2="230" y2="308" stroke="#666" stroke-width="2"/>
+      <line x1="202" y1="280" x2="258" y2="280" stroke="#666" stroke-width="2"/>
+
+      <!-- Right rear wheel -->
+      <circle cx="640" cy="280" r="42" fill="#222" stroke="#555" stroke-width="4"/>
+      <circle cx="640" cy="280" r="28" fill="#333" stroke="#666" stroke-width="2"/>
+      <circle cx="640" cy="280" r="8"  fill="#888"/>
+      <line x1="640" y1="252" x2="640" y2="308" stroke="#666" stroke-width="2"/>
+      <line x1="612" y1="280" x2="668" y2="280" stroke="#666" stroke-width="2"/>
+
+      <!-- Rear lights -->
+      <rect x="800" y="75" width="14" height="22" rx="3" fill="#e74c3c" opacity=".9"/>
+      <rect x="800" y="100" width="14" height="16" rx="3" fill="#f39c12" opacity=".9"/>
+      <!-- Front lights -->
+      <rect x="96" y="75" width="14" height="22" rx="3" fill="#e74c3c" opacity=".9"/>
+      <rect x="96" y="100" width="14" height="16" rx="3" fill="#f39c12" opacity=".9"/>
+
+      <!-- Arrow: animal flow -->
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#f0a500"/>
+        </marker>
+      </defs>
+      <path d="M 870,167 Q 600,100 90,167" stroke="#f0a500" stroke-width="2.5"
+            stroke-dasharray="8,4" fill="none" marker-end="url(#arr)" opacity=".75"/>
+      <text x="480" y="105" text-anchor="middle" font-family="Segoe UI,sans-serif"
+            font-size="12" fill="#f0a500" opacity=".85">Hayvan akış yönü →</text>
+    </svg>
+    <div class="label-list">
+      <span class="llabel">🔴 Konektör (Çeki Topu)</span>
+      <span class="llabel">🟢 Alüminyum Çerçeve</span>
+      <span class="llabel">🟡 Ön Zampa (Çıkış)</span>
+      <span class="llabel">🟡 Arka Zampa (Giriş)</span>
+      <span class="llabel">⚫ Çift Aks Tekerlek</span>
+      <span class="llabel">💡 Çalışma Işıkları</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  SLIDE 4 – HAYVAN AKIŞ SİSTEMİ
+══════════════════════════════════════ -->
+<section class="slide" id="s4">
+  <span class="tag">Operasyon Akışı</span>
+  <h2 style="text-align:center;margin-bottom:4px">Hayvan İçinden Geçiş Süreci</h2>
+  <p class="lead" style="font-size:.9rem;margin-bottom:16px">Arka rampadan giren hayvan, duraklama yapmadan tüm istasyonları geçerek ön rampadan çıkar.</p>
+  <div class="flow-wrap">
+    <div class="flow-diagram">
+      <div class="ramp-rear"></div>
+      <div class="trailer-body-flow"></div>
+      <div class="ramp-front"></div>
+      <div class="ramp-label rear">ARKA ZAMPA<br><small>GİRİŞ 🐄</small></div>
+      <div class="ramp-label front">ÖN ZAMPA<br><small>ÇIKIŞ ✅</small></div>
+      <div class="inside-labels">
+        <div class="in-label"><span>🛁</span><small>Yıkama</small></div>
+        <div class="in-label"><span>🩺</span><small>Muayene</small></div>
+        <div class="in-label"><span>💉</span><small>Tedavi</small></div>
+        <div class="in-label"><span>🐾</span><small>Tırnak</small></div>
+      </div>
+      <div class="cow">🐄</div>
+    </div>
+    <div class="flow-steps">
+      <div class="fstep">
+        <div class="fstep-icon">🐄</div>
+        <h4>1. Giriş</h4>
+        <p>Hayvan arka rampadan güvenle bindirilir. Ray sistemi yönlendirme sağlar.</p>
+      </div>
+      <div class="fstep">
+        <div class="fstep-icon">🛁</div>
+        <h4>2. Yıkama & Ayak Bakımı</h4>
+        <p>Basınçlı su ile tam vücut ve tırnak temizliği. Dezenfeksiyon yapılır.</p>
+      </div>
+      <div class="fstep">
+        <div class="fstep-icon">🩺</div>
+        <h4>3. Sağlık Kontrolü</h4>
+        <p>Pistonlu kaldıraç ile hayvan sabitlenir. Muayene ve tedavi uygulanır.</p>
+      </div>
+      <div class="fstep">
+        <div class="fstep-icon">✅</div>
+        <h4>4. Çıkış</h4>
+        <p>İşlemi tamamlayan hayvan ön rampadan güvenli şekilde indirilir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  SLIDE 5 – İÇ PLAN
+══════════════════════════════════════ -->
+<section class="slide" id="s5">
+  <span class="tag">İç Mekan Planı</span>
+  <h2 style="text-align:center;margin-bottom:12px">Zemin Planı & İstasyonlar</h2>
+  <div class="floorplan-wrap">
+    <svg viewBox="0 0 900 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:16px;">
+      <!-- Background -->
+      <rect width="900" height="340" fill="#0d1b12" rx="16"/>
+
+      <!-- Outer walls -->
+      <rect x="30" y="20" width="840" height="300" rx="8" fill="none" stroke="#2d9e5f" stroke-width="3"/>
+
+      <!-- Corridor (center path) -->
+      <rect x="30" y="130" width="840" height="80" fill="rgba(45,158,95,.07)" stroke="rgba(45,158,95,.2)" stroke-dasharray="6,4"/>
+      <text x="450" y="175" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="12" fill="rgba(255,255,255,.3)" letter-spacing="3">HAYVAN KORİDORU</text>
+
+      <!-- REAR DOOR (right) -->
+      <rect x="820" y="130" width="50" height="80" rx="4" fill="#1a4d2a" stroke="#f0a500" stroke-width="2"/>
+      <text x="845" y="165" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" fill="#f0a500">ARKA</text>
+      <text x="845" y="180" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" fill="#f0a500">GİRİŞ</text>
+      <text x="845" y="200" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="18" fill="#f0a500">🐄</text>
+
+      <!-- FRONT DOOR (left) -->
+      <rect x="30" y="130" width="50" height="80" rx="4" fill="#1a4d2a" stroke="#2d9e5f" stroke-width="2"/>
+      <text x="55" y="165" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" fill="#2d9e5f">ÖN</text>
+      <text x="55" y="180" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" fill="#2d9e5f">ÇIKIŞ</text>
+      <text x="55" y="200" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="18" fill="#2d9e5f">✅</text>
+
+      <!-- ── ÜSTTE (Sol Duvar = upper area) ── -->
+      <!-- Grooming / Hazırlık alanı -->
+      <rect x="80" y="25" width="200" height="100" rx="6" fill="rgba(26,106,60,.3)" stroke="#2d9e5f" stroke-width="1.5"/>
+      <text x="180" y="52" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#a8e6c0">🪮 BAKIMA HAZIRLIK</text>
+      <text x="180" y="68" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.55)">Hayvanın fırçalama için</text>
+      <text x="180" y="80" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.55)">yüzey bakım alanı</text>
+
+      <!-- Değerlendirme / Muayene -->
+      <rect x="310" y="25" width="200" height="100" rx="6" fill="rgba(26,82,118,.3)" stroke="#1a5276" stroke-width="1.5"/>
+      <text x="410" y="52" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#aed6f1">🩺 MUAYENE</text>
+      <text x="410" y="68" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.55)">Değerlendirme &amp; Tedavi</text>
+      <text x="410" y="80" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.55)">önce sabitleme yapılır</text>
+
+      <!-- Nemlendirme / Yıkama -->
+      <rect x="540" y="25" width="200" height="100" rx="6" fill="rgba(8,81,111,.3)" stroke="#117a8b" stroke-width="1.5"/>
+      <text x="640" y="52" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#81d4fa">💧 YIKAMA / NEM.</text>
+      <text x="640" y="68" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.55)">Basınçlı su, dezenfektan</text>
+      <text x="640" y="80" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.55)">su ayak banyosu hattı</text>
+
+      <!-- ── ALTTA (Sağ Duvar = lower area) ── -->
+      <!-- Ekipman Dolabı -->
+      <rect x="80" y="215" width="180" height="100" rx="6" fill="rgba(120,50,10,.25)" stroke="#c0392b" stroke-width="1.5"/>
+      <text x="170" y="242" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#f1948a">🗄️ EKİPMAN DOLABI</text>
+      <text x="170" y="258" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.5)">Cerrahi aletler</text>
+      <text x="170" y="270" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.5)">tıbbi sarf malzemeleri</text>
+
+      <!-- Sağlık Çekmeceleri -->
+      <rect x="290" y="215" width="200" height="100" rx="6" fill="rgba(120,50,10,.25)" stroke="#c0392b" stroke-width="1.5"/>
+      <text x="390" y="242" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#f1948a">💊 SAĞLIK ÇEKMECELERİ</text>
+      <text x="390" y="258" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.5)">İlaçlar, aşılar</text>
+      <text x="390" y="270" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.5)">pansuman malzemeleri</text>
+
+      <!-- Su Tankı -->
+      <rect x="520" y="215" width="160" height="100" rx="6" fill="rgba(8,81,111,.3)" stroke="#117a8b" stroke-width="1.5"/>
+      <text x="600" y="242" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#81d4fa">🛢️ SU TANKI</text>
+      <text x="600" y="258" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.5)">Basınçlı &amp; tazz su</text>
+      <text x="600" y="270" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.5)">pompası ile dolaşım</text>
+
+      <!-- Generator / Enerji -->
+      <rect x="710" y="215" width="150" height="100" rx="6" fill="rgba(120,100,0,.3)" stroke="#f0a500" stroke-width="1.5"/>
+      <text x="785" y="242" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#f9e79f">⚡ JENERATÖR</text>
+      <text x="785" y="258" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.5)">Enerji üretimi</text>
+      <text x="785" y="270" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="rgba(255,255,255,.5)">piston pompası</text>
+
+      <!-- Rail line top -->
+      <line x1="80" y1="128" x2="820" y2="128" stroke="#8fa3b1" stroke-width="3" stroke-dasharray="10,3"/>
+      <text x="450" y="122" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#8fa3b1" letter-spacing="4">ÜSTTE RAY SİSTEMİ</text>
+
+      <!-- Rail line bottom -->
+      <line x1="80" y1="212" x2="820" y2="212" stroke="#8fa3b1" stroke-width="3" stroke-dasharray="10,3"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  SLIDE 6 – ÖZELLİKLER
+══════════════════════════════════════ -->
+<section class="slide" id="s6">
+  <span class="tag">Donanım & Özellikler</span>
+  <h2 style="text-align:center;margin-bottom:4px">Tam Donanım Listesi</h2>
+  <div class="features-grid">
+    <div class="feat-card" data-tip="Römorkun tabanına bağlı kızak ray">
+      <div class="feat-icon">🛤️</div>
+      <h4>Raylı Kızak Sistemi</h4>
+      <p>Hayvanı otomatik yönlendiren ray; greydar makinelerinden ilham alınmış sürgü mekanizması ile taban boyunca uzanır.</p>
+    </div>
+    <div class="feat-card" data-tip="Hidrolik piston ile sabitleme">
+      <div class="feat-icon">⚙️</div>
+      <h4>Pistonlu Kaldıraç</h4>
+      <p>Hayvanın hareket etmemesi için hidrolik piston ile bacaklar arasına ara sabitleme uygular. Tırnak bakımı ve enjeksiyon kolaylaşır.</p>
+    </div>
+    <div class="feat-card" data-tip="Basınçlı sıcak/soğuk su">
+      <div class="feat-icon">💧</div>
+      <h4>Basınçlı Su Sistemi</h4>
+      <p>Taze su deposu + elektrikli pompa; yüksek basınçlı yıkama, dezenfektan hattı ve ayak banyosu havuzu ile entegre.</p>
+    </div>
+    <div class="feat-card" data-tip="Çekilebilir sağlık çekmeceleri">
+      <div class="feat-icon">🗂️</div>
+      <h4>Sağlık Çekmeceleri</h4>
+      <p>Sağ iç duvara monte; ilaç, aşı, pansuman, eldiven ve sarf malzemeleri için kilitli çekmeceler. Kolay erişim tasarımı.</p>
+    </div>
+    <div class="feat-card" data-tip="Büyük kapılı ekipman dolabı">
+      <div class="feat-icon">🗄️</div>
+      <h4>Ekipman Dolabı</h4>
+      <p>Sol ön köşede büyük kapılı cerrahi alet dolabı. Steril bölme ve ısı yalıtımlı aşı rafı içerir.</p>
+    </div>
+    <div class="feat-card" data-tip="Üst çubukta çengel sırası">
+      <div class="feat-icon">🪝</div>
+      <h4>Çengel Sırası</h4>
+      <p>Sağ yan duvarda üst çubuğa monte edilmiş çengel sırası. Hortum, kablo, bant ve ekipman askısı için pratik çözüm.</p>
+    </div>
+    <div class="feat-card" data-tip="Yüksek lümen LED">
+      <div class="feat-icon">💡</div>
+      <h4>Çalışma Aydınlatması</h4>
+      <p>Tavana ve duvarlara yerleştirilmiş LED bar aydınlatma. Gündüz ve gece operasyona uygun, titreşim dayanımlı.</p>
+    </div>
+    <div class="feat-card" data-tip="İki yönlü rampa açılımı">
+      <div class="feat-icon">🚪</div>
+      <h4>Çift Rampa Sistemi</h4>
+      <p>Ön ve arka rampalar birbirinden bağımsız açılır. Skid-proof yüzey ve kenar koruyucuları ile güvenli biniş/iniş.</p>
+    </div>
+    <div class="feat-card" data-tip="Römork tabanı güçlü çelik">
+      <div class="feat-icon">🏗️</div>
+      <h4>Güçlendirilmiş Taban</h4>
+      <p>Kaymaz çelik ızgara zemin. Büyükbaş hayvanların ağırlığını taşıyan güçlendirilmiş profil iskelet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  SLIDE 7 – RAY & PİSTON
+══════════════════════════════════════ -->
+<section class="slide" id="s7">
+  <span class="tag">Mekanik Sistem Detayı</span>
+  <h2 style="text-align:center;margin-bottom:14px">Raylı Sistem & Pistonlu Kaldıraç</h2>
+  <div class="rail-system-wrap">
+    <div class="rail-diagram">
+      <!-- Rail tracks -->
+      <div class="rail-track top" style="top:40px"></div>
+      <div class="rail-track bottom" style="top:80px"></div>
+      <div class="rail-track top" style="top:120px"></div>
+      <div class="rail-track bottom" style="top:160px"></div>
+
+      <!-- Trolley -->
+      <div class="trolley"></div>
+
+      <!-- Piston -->
+      <div class="piston-body">
+        <div class="piston-cylinder"></div>
+        <div class="piston-rod"></div>
+      </div>
+
+      <!-- Labels -->
+      <div style="position:absolute;right:30px;top:20px;text-align:right;">
+        <div style="font-size:.7rem;color:#8fa3b1;margin-bottom:4px">← Çift Ray Profil</div>
+        <div style="font-size:.7rem;color:var(--accent)">Pistonlu Sabitleme ↓</div>
+      </div>
+      <div style="position:absolute;left:30px;bottom:16px;font-size:.7rem;color:rgba(255,255,255,.4)">
+        Römork boyunca uzanan 4 paralel ray üzerinde kızak hareketi
+      </div>
+    </div>
+    <div class="rail-specs">
+      <div class="rspec">
+        <h4>🛤️ Ray Sistemi</h4>
+        <p>Römorkun ön kısmından arka kısmına kadar uzanan çift profil çelik ray. Hayvanı doğru yönde tutar, ayrıca malzeme taşıma kızağı olarak kullanılır.</p>
+      </div>
+      <div class="rspec">
+        <h4>⚙️ Pistonlu Kaldıraç</h4>
+        <p>Greydar makinelerindeki lastik pozisyon pistonundan ilham alınmış sistem. Hayvanın bacakları arasına kontrollü basınçla girip sabitler. Tırnak bakımı ve müdahale kolaylaşır.</p>
+      </div>
+      <div class="rspec">
+        <h4>🔗 Entegrasyon</h4>
+        <p>Ray + piston sistemi birlikte çalışarak hayvanı ilerletir, doğru noktada durdurur ve sabitler. Veteriner tek başına operasyonu yönetebilir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  SLIDE 8 – SU & EKİPMAN SİSTEMİ
+══════════════════════════════════════ -->
+<section class="slide" id="s8">
+  <span class="tag">Su & Ekipman Yönetimi</span>
+  <h2 style="text-align:center;margin-bottom:14px">Basınçlı Su & Depolama Sistemleri</h2>
+  <div class="water-grid">
+    <div class="water-panel">
+      <h3>💧 Basınçlı Su Sistemi</h3>
+      <div class="tank-visual">
+        <div class="water-fill">
+          <div class="bubble b1"></div>
+          <div class="bubble b2"></div>
+          <div class="bubble b3"></div>
+        </div>
+      </div>
+      <div class="water-items">
+        <div class="witem"><span>🛢️</span> Ana taze su deposu (250–500 L)</div>
+        <div class="witem"><span>⚡</span> 12V elektrikli basınç pompası</div>
+        <div class="witem"><span>🚿</span> Yüksek basınçlı yıkama hortumu</div>
+        <div class="witem"><span>🦶</span> Ayak banyosu havuzu (dezenfektan)</div>
+        <div class="witem"><span>♻️</span> Atık su drenaj kanalı (zemin)</div>
+        <div class="witem"><span>🌡️</span> Isıtmalı su seçeneği (kış kullanımı)</div>
+      </div>
+    </div>
+    <div class="water-panel">
+      <h3>🗄️ Ekipman & Depolama</h3>
+      <div class="water-items" style="margin-top:8px">
+        <div class="witem"><span>💉</span> Aşı & ilaç çekmeceleri (kilitli, soğuk)</div>
+        <div class="witem"><span>🩹</span> Pansuman & steril malzeme bölmesi</div>
+        <div class="witem"><span>🔪</span> Steril cerrahi alet seti</div>
+        <div class="witem"><span>🧤</span> Tek kullanımlık eldiven & önlük stoğu</div>
+        <div class="witem"><span>🪝</span> Duvar çengeli (hortum, kablo, ip)</div>
+        <div class="witem"><span>📋</span> Kayıt panosu / dijital tablet tutucu</div>
+        <div class="witem"><span>🔦</span> Yedek aydınlatma & uzatma kablosu</div>
+        <div class="witem"><span>⚡</span> Jeneratör / invertör güç kaynağı</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+  SLIDE 9 – KAPANIŞ
+══════════════════════════════════════ -->
+<section class="slide" id="s9">
+  <div class="mesh mesh1" style="width:500px;height:500px;background:rgba(45,158,95,.12);top:-80px;right:-80px;"></div>
+  <div class="closing-wrap">
+    <div class="big-icon">🐄</div>
+    <span class="tag">TOYBULANS – Sahaya Giden Klinik</span>
+    <h1 style="margin-bottom:12px">Hayvancılığın<br><span style="color:var(--accent)">Mobil Geleceği</span></h1>
+    <p class="lead">
+      Tek yönlü geçiş mantığı, tam donanımlı interior, basınçlı su ve mekanik sabitleme sistemleriyle
+      TOYBULANS sahadaki her hayvan için eksiksiz bakım sağlar.
+    </p>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="num">1</div>
+        <div class="lbl">Veteriner yeterli</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">360°</div>
+        <div class="lbl">Tam bakım kapasitesi</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">500L</div>
+        <div class="lbl">Basınçlı su deposu</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">0</div>
+        <div class="lbl">Klinik taşıma stresi</div>
+      </div>
+    </div>
+    <button class="cta-btn" onclick="goTo(0)">↩ Başa Dön</button>
+  </div>
+</section>
+
+<!-- ══ NAV ══ -->
+<div id="nav">
+  <button onclick="prev()">‹</button>
+  <div id="dots"></div>
+  <span id="slideNum">1 / 9</span>
+  <button onclick="next()">›</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let current = 0;
+
+  function buildDots() {
+    const container = document.getElementById('dots');
+    slides.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === 0 ? ' active' : '');
+      d.onclick = () => goTo(i);
+      container.appendChild(d);
+    });
+  }
+
+  function goTo(n) {
+    if (n === current) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('exit');
+    const prev = current;
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('exit'), 600);
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    document.getElementById('slideNum').textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') next();
+    if (e.key === 'ArrowLeft') prev();
+  });
+
+  // Touch swipe
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = tx - e.changedTouches[0].clientX;
+    if (Math.abs(dx) > 50) dx > 0 ? next() : prev();
+  });
+
+  buildDots();
+</script>
+</body>
+</html>
